@@ -1,11 +1,17 @@
 const { ethers } = require("hardhat");
 
+const LONG_RATIO = 0.8; 
+const NUM_USERS = 500;
+const totalTrades = 500;
+
 async function stressTest() {
   console.log("🔥 Starting Enhanced Stress Test...\n");
 
   // Get signers (simulate multiple users)
   const accounts = await ethers.getSigners();
-  const users = accounts.slice(1, 21); // Use 20 accounts
+  const users = accounts.slice(1, NUM_USERS+1); // Use 20 accounts
+
+  console.log('total users', users.length)
   
   // Deploy contracts
   const MockOracle = await ethers.getContractFactory("MockEngagementOracle");
@@ -15,7 +21,7 @@ async function stressTest() {
   const factory = await Factory.deploy(await oracle.getAddress());
   
   // Create multiple markets with tracking
-  const marketCount = 5;
+  const marketCount = 1;
   const markets = [];
   const marketAnalytics = [];
   
@@ -49,7 +55,7 @@ async function stressTest() {
 
   // Simulate heavy trading with detailed tracking
   console.log("💰 Simulating heavy trading...");
-  const totalTrades = 1000;
+
   let completedTrades = 0;
   
   const startTime = Date.now();
@@ -60,7 +66,7 @@ async function stressTest() {
     const marketIndex = i % markets.length;
     const { market } = markets[marketIndex];
     
-    const isLong = Math.random() > 0.5;
+    const isLong = Math.random() < LONG_RATIO;
     const tokens = ethers.parseEther((Math.random() * 50 + 10).toString()); // Reduced max for better distribution
     
     try {
@@ -165,7 +171,6 @@ async function stressTest() {
     
     // Group trades by user and winning side
     const winnerTrades = new Map();
-    
     for (const trade of analytics.trades) {
       if (trade.isLong === outcome) { // This trade was on the winning side
         if (!winnerTrades.has(trade.user)) {
@@ -179,7 +184,9 @@ async function stressTest() {
         userStats.totalTokens += trade.tokens;
         userStats.totalCost += trade.cost;
         userStats.trades++;
+        
       }
+     
     }
     
     if (winnerTrades.size === 0) {
@@ -191,7 +198,7 @@ async function stressTest() {
     let marketWinnerInvestment = 0n;
     
     // Calculate payout for each winner
-    for (const [userAddress, userStats] of winnerTrades) {
+    for (const [userAddress,userStats ] of winnerTrades) {
       try {
         // Get user's balance of winning tokens
         const userBalance = outcome ? 

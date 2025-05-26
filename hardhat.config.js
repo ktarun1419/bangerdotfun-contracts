@@ -16,7 +16,12 @@ module.exports = {
       chainId: 31337,
       gas: 12000000,
       blockGasLimit: 12000000,
-      allowUnlimitedContractSize: true
+      allowUnlimitedContractSize: true,
+      accounts: {
+        count: 500,
+        // optional: give each account 1000 ETH so you can play
+        accountsBalance: "1000000000000000000000000"
+      }
     },
     goerli: {
       url: process.env.GOERLI_URL || "",
